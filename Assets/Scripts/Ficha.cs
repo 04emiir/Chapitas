@@ -8,6 +8,7 @@ using static UnityEditor.PlayerSettings;
 
 public class Ficha : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler {
     Rigidbody2D rb;
+    LineRenderer lr;
 
     Vector2 startPoint;
     Vector2 endPoint;
@@ -30,9 +31,6 @@ public class Ficha : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDra
         rb = GetComponent<Rigidbody2D>();
     }
 
-    // Update is called once per frame
-    public void FixedUpdate() { 
-    }
 
     public void OnPointerDown(PointerEventData eventData) {
     }
@@ -40,6 +38,11 @@ public class Ficha : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDra
 
     public void OnBeginDrag(PointerEventData data) {
         startPoint = data.position;
+        if (lr = null) {
+            lr = gameObject.AddComponent<LineRenderer>();
+        }
+        lr.positionCount = 2;
+        //lr.SetPosition = (0, new Vector3(startPoint.x, startPoint.y, 0f));
 
     }
 
