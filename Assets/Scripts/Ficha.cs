@@ -4,30 +4,26 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using static UnityEditor.PlayerSettings;
 
 public class Ficha : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler {
     Rigidbody2D rb;
-    LineRenderer lr;
+    public LineRenderer lr;
 
     Vector2 startPoint;
     Vector2 endPoint;
-    Vector2 vectorDirectionOfDrag;
-    Vector2 vectorDistanceOfDrag;
-    public float sizeOfDrag;
 
-    public float minForce;
-    public float maxForce;
+    float minForceApplied;
+    float maxForceApplied;
+    float minDragSize;
+    float maxDragSize;
 
-    public float minDragSize;
-    public float maxDragSize;
     // Start is called before the first frame update
     void Start() {
-        minForce = 200f;
-        maxForce = 2000f;
+        minForceApplied = 200f;
+        maxForceApplied = 2000f;
 
-        minDragSize = 90f;
-        maxDragSize = 300f;
+        minDragSize = 100f;
+        maxDragSize = 375f;
         rb = GetComponent<Rigidbody2D>();
     }
 
@@ -38,36 +34,58 @@ public class Ficha : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDra
 
     public void OnBeginDrag(PointerEventData data) {
         startPoint = data.position;
-        if (lr = null) {
-            lr = gameObject.AddComponent<LineRenderer>();
-        }
-        lr.positionCount = 2;
-        //lr.SetPosition = (0, new Vector3(startPoint.x, startPoint.y, 0f));
 
     }
 
     public void OnDrag(PointerEventData data) {
+        Vector2 currentPoint = data.position;
+        Vector2 currentDragEnd = currentPoint - startPoint;
+
+        //NORMALIZED VECTOR (DIRECTION OF DRAG LINE)
+        Vector2 directionOfLine = (endPoint - startPoint).normalized;
+
+        calculateDragDistance(startPoint, endPoint, directionOfLine);
+
     }
 
     public void OnEndDrag(PointerEventData data) {
+        //ENDING POSITION
         endPoint = data.position;
 
-        vectorDirectionOfDrag = -(endPoint - startPoint).normalized;
-        vectorDistanceOfDrag = endPoint - startPoint;
+        // CLEAR THE LINE
+        lr.SetPosition(0, new Vector3(0f, 0f, 0f));
 
-        sizeOfDrag = Mathf.Sqrt(Mathf.Pow(vectorDistanceOfDrag.x, 2F) + Mathf.Pow(vectorDistanceOfDrag.y, 2F));
+        //NORMALIZED VECTOR (DIRECTION OF FORCE)
+        Vector2 directionOfDrag = -(endPoint - startPoint).normalized;
+
+        //HOW LONG THE DRAG IS.
+        calculateDragDistance(startPoint, endPoint, directionOfDrag);
+        
+    }
+
+    public void calculateDragDistance(Vector2 start, Vector2 end, Vector2 direction) {
+        float sizeOfDrag = Mathf.Sqrt(Mathf.Pow((end.x - start.x), 2F) + Mathf.Pow((end.y - start.y), 2F));
 
         if (sizeOfDrag >= maxDragSize) {
-            Debug.Log(0);
-            rb.AddForce(vectorDirectionOfDrag * maxForce);
-        } else if (sizeOfDrag <= minDragSize) {
-            Debug.Log(1);
-            rb.AddForce(vectorDirectionOfDrag * minForce);
-        } else {
-            Debug.Log(2);
-            float fuerzaDeTres = (float)(sizeOfDrag * maxForce) / maxDragSize;
-            rb.AddForce(vectorDirectionOfDrag * fuerzaDeTres);
+            rb.AddForce(direction * maxForceApplied);
+        } else if (sizeOfDrag == minDragSize) {
+            rb.AddForce(direction * minForceApplied);
+        } else if (sizeOfDrag > minDragSize || sizeOfDrag < maxDragSize) {
+            float calculatedForceApplied = (float)(sizeOfDrag * maxForceApplied) / maxDragSize;
+            rb.AddForce(direction * calculatedForceApplied);
         }
-        
+    }
+
+    public void calculateDragLine(Vector2 start, Vector2 end, Vector2 direction) {
+        float sizeOfLine = Mathf.Sqrt(Mathf.Pow((end.x - start.x), 2F) + Mathf.Pow((end.y - start.y), 2F));
+
+        if (sizeOfLine >= maxDragSize) {
+            lr.SetPosition(0, new Vector3(0f, 0f, 0f));
+        } else if (sizeOfLine == minDragSize) {
+            rb.AddForce(direction * minForceApplied);
+        } else if (sizeOfLine > minDragSize || sizeOfLine < maxDragSize) {
+            float calculatedForceApplied = (float)(sizeOfLine * maxForceApplied) / maxDragSize;
+            rb.AddForce(direction * calculatedForceApplied);
+        }
     }
 }
